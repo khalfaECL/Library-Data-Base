@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Propositions - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📋 Mes propositions d'achat</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <label for="email" class="form-label">Sélectionnez un utilisateur :</label>
+                        <select class="form-select" name="email" required>
+                            <option value="">-- Choisir un utilisateur --</option>
+                            {% for user in users %}
+                                <option value="{{ user.email }}" {% if selected_user == user.email %}selected{% endif %}>
+                                    {{ user.nom_complet }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Afficher les propositions
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if propositions is not none %}
+        {% if propositions|length > 0 %}
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📊 Propositions ({{ propositions|length }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Titre</th>
+                                    <th>Auteurs</th>
+                                    <th>Éditeur</th>
+                                    <th>Année</th>
+                                    <th>Type</th>
+                                    <th>Date proposition</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prop in propositions %}
+                                <tr>
+                                    <td>{{ prop.id_proposition }}</td>
+                                    <td><strong>{{ prop.titre }}</strong></td>
+                                    <td>{{ prop.auteurs or 'Non spécifié' }}</td>
+                                    <td>{{ prop.editeur or 'N/A' }}</td>
+                                    <td>{{ prop.annee or '-' }}</td>
+                                    <td><span class="badge bg-secondary">{{ prop.type_publication }}</span></td>
+                                    <td>{{ prop.date_proposition }}</td>
+                                </tr>
+                                {% if prop.informations_complementaires %}
+                                <tr class="table-light">
+                                    <td colspan="7">
+                                        <small><strong>💡 Informations :</strong> {{ prop.informations_complementaires }}</small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <h5>ℹ️ Aucune proposition</h5>
+                <p class="mb-0">Cet utilisateur n'a pas encore fait de proposition d'achat.</p>
+                <a href="{{ url_for('users.proposer_achat') }}" class="btn btn-primary mt-3">
+                    📤 Faire une proposition
+                </a>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

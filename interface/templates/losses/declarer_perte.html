@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Déclarer une perte{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">⚠️ Déclarer une publication comme perdue</h2>
+
+    <div class="alert alert-danger">
+        <h5>⚠️ Attention</h5>
+        <p class="mb-0">
+            Cette action va marquer la publication comme "perdue" définitivement. 
+            Assurez-vous que la publication ne peut vraiment pas être récupérée.
+        </p>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0">📖 Détails de la publication</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>ID :</strong> {{ publication.id_publication }}</p>
+                    <p><strong>Titre :</strong> {{ publication.titre }}</p>
+                    <p><strong>Éditeur :</strong> {{ publication.editeur }}</p>
+                    <p><strong>Année :</strong> {{ publication.annee_publication }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Prix :</strong> {{ publication.prix }} {{ publication.code_devise }}</p>
+                    <p><strong>Laboratoire :</strong> {{ publication.nom_labo }}</p>
+                    <p><strong>Statut actuel :</strong> 
+                        <span class="badge bg-{{ 'warning' if publication.statut == 'emprunté' else 'secondary' }}">
+                            {{ publication.statut }}
+                        </span>
+                    </p>
+                    {% if publication.email_emprunteur %}
+                        <p><strong>Emprunté par :</strong> {{ publication.nom_emprunteur }} ({{ publication.email_emprunteur }})</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">🗑️ Formulaire de déclaration</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Motif -->
+                <div class="mb-3">
+                    <label for="motif" class="form-label">Motif de la perte <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="motif" rows="4" required 
+                              placeholder="Expliquez les circonstances de la perte..."></textarea>
+                </div>
+
+                <!-- Coût de remplacement -->
+                <div class="mb-4">
+                    <label for="cout_remplacement" class="form-label">Coût de remplacement estimé</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" class="form-control" name="cout_remplacement" 
+                               value="{{ publication.prix }}" placeholder="0.00">
+                        <span class="input-group-text">{{ publication.code_devise }}</span>
+                    </div>
+                    <small class="text-muted">Valeur par défaut : prix d'achat initial</small>
+                </div>
+
+                <!-- Résumé -->
+                <div class="alert alert-light">
+                    <h6>📋 Résumé de l'action :</h6>
+                    <ul class="mb-0">
+                        <li>La publication sera marquée comme <strong>"perdue"</strong></li>
+                        <li>L'emprunt sera annulé</li>
+                        {% if publication.email_emprunteur %}
+                            <li>L'emprunteur <strong>{{ publication.nom_emprunteur }}</strong> sera enregistré comme responsable</li>
+                        {% endif %}
+                        <li>Une entrée sera créée dans l'historique des pertes</li>
+                    </ul>
+                </div>
+
+                <!-- Boutons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger btn-lg" 
+                            onclick="return confirm('Confirmer la déclaration de perte ?')">
+                        ⚠️ Déclarer comme perdue
+                    </button>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary btn-lg">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

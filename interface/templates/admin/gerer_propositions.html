@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Gérer les propositions{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📋 Gérer les propositions d'achat</h2>
+
+    <div class="alert alert-info">
+        <strong>ℹ️ Information :</strong> 
+        Voici toutes les propositions d'achat soumises par les utilisateurs.
+        Vous pouvez les consulter et les supprimer une fois traitées.
+    </div>
+
+    {% if propositions and propositions|length > 0 %}
+        <!-- Statistiques -->
+        <div class="card bg-primary text-white mb-4">
+            <div class="card-body text-center">
+                <h3>{{ propositions|length }}</h3>
+                <p class="mb-0">Propositions en attente</p>
+            </div>
+        </div>
+
+        <!-- Liste des propositions -->
+        <div class="row">
+            {% for prop in propositions %}
+            <div class="col-md-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">📚 {{ prop.titre }}</h5>
+                        <small class="text-muted">Proposé le {{ prop.date_proposition }}</small>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Auteur(s) :</dt>
+                            <dd class="col-sm-8">{{ prop.auteurs or 'Non spécifié' }}</dd>
+
+                            <dt class="col-sm-4">Éditeur :</dt>
+                            <dd class="col-sm-8">{{ prop.editeur or 'Non spécifié' }}</dd>
+
+                            <dt class="col-sm-4">Année :</dt>
+                            <dd class="col-sm-8">{{ prop.annee or 'Non spécifiée' }}</dd>
+
+                            <dt class="col-sm-4">Type :</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-secondary">{{ prop.type_publication }}</span>
+                            </dd>
+
+                            <dt class="col-sm-4">Proposé par :</dt>
+                            <dd class="col-sm-8">
+                                <strong>{{ prop.nom_proposeur }}</strong><br>
+                                <small class="text-muted">{{ prop.email_utilisateur }}</small>
+                            </dd>
+
+                            {% if prop.informations_complementaires %}
+                            <dt class="col-sm-12 mt-3">
+                                <strong>📝 Informations complémentaires :</strong>
+                            </dt>
+                            <dd class="col-sm-12">
+                                <div class="alert alert-light mb-0">
+                                    <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ prop.informations_complementaires }}</pre>
+                                </div>
+                            </dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                    <div class="card-footer">
+                        <form method="POST" action="{{ url_for('admin.supprimer_proposition') }}" class="d-inline">
+                            <input type="hidden" name="id_proposition" value="{{ prop.id_proposition }}">
+                            <button type="submit" 
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('🗑️ Supprimer cette proposition ?\n\nTitre : {{ prop.titre }}\nProposé par : {{ prop.nom_proposeur }}')">
+                                🗑️ Supprimer
+                            </button>
+                        </form>
+                        <button class="btn btn-outline-secondary btn-sm" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#details{{ prop.id_proposition }}">
+                            Détails complets
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-success">
+            <h5>✅ Aucune proposition en attente</h5>
+            <p class="mb-0">Il n'y a actuellement aucune proposition d'achat à traiter.</p>
+        </div>
+    {% endif %}
+
+    <div class="mt-3">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">← Retour Admin</a>
+    </div>
+</div>
+{% endblock %}

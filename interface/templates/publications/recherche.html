@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Recherche - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">🔍 Recherche Avancée</h1>
+        <p class="lead">Rechercher des publications par différents critères</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaires de recherche -->
+<div class="row">
+    <!-- Recherche par catégorie et prix -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Par Catégorie et Prix (Q6)</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="search_type" value="categorie">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select class="form-select" name="categorie" required>
+                            <option value="">-- Choisir --</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.nom_categorie }}">{{ cat.nom_categorie }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Prix maximum (€)</label>
+                        <input type="number" class="form-control" name="prix_max" 
+                               value="100" min="0" step="0.01" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche par auteur et année -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Par Auteur et Année (Q7)</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="search_type" value="auteur">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="nom" 
+                               placeholder="Ex: Knuth" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-control" name="prenom" 
+                               placeholder="Ex: Donald" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Publié après</label>
+                        <input type="number" class="form-control" name="annee_min" 
+                               value="1990" min="1000" max="2100" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Rechercher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche par éditeur -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Par Éditeur (Q8)</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="search_type" value="editeur">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Éditeur</label>
+                        <select class="form-select" name="editeur" required>
+                            <option value="">-- Choisir --</option>
+                            {% for pub in publishers %}
+                                <option value="{{ pub.editeur }}">{{ pub.editeur }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <p class="text-muted small">
+                        Liste chronologique des livres de cet éditeur
+                    </p>
+                    
+                    <button type="submit" class="btn btn-info w-100">Rechercher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Résultats de recherche -->
+{% if results is not none %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            📊 Résultats : {{ results|length }} publication(s) trouvée(s)
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if results %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            {% if search_type == 'categorie' %}
+                                <th>Titre</th>
+                                <th>Auteurs</th>
+                                <th>Prix Original</th>
+                                <th>Prix (€)</th>
+                                <th>Laboratoire</th>
+                            {% elif search_type == 'auteur' %}
+                                <th>Titre</th>
+                                <th>Tous les Auteurs</th>
+                                <th>Éditeur</th>
+                                <th>Année</th>
+                                <th>Type</th>
+                            {% elif search_type == 'editeur' %}
+                                <th>ISBN</th>
+                                <th>Titre</th>
+                                <th>Auteurs</th>
+                                <th>Édition</th>
+                                <th>Année</th>
+                                <th>Prix</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            {% if search_type == 'categorie' %}
+                                <td><strong>{{ result.titre }}</strong></td>
+                                <td>{{ result.auteurs }}</td>
+                                <td>{{ result.prix }} {{ result.code_devise }}</td>
+                                <td><strong>{{ result.prix_euros }} €</strong></td>
+                                <td><small>{{ result.nom_labo }}</small></td>
+                            {% elif search_type == 'auteur' %}
+                                <td><strong>{{ result.titre }}</strong></td>
+                                <td>{{ result.tous_auteurs }}</td>
+                                <td>{{ result.editeur }}</td>
+                                <td>{{ result.annee_publication }}</td>
+                                <td><span class="badge bg-secondary">{{ result.type_publication }}</span></td>
+                            {% elif search_type == 'editeur' %}
+                                <td><small>{{ result.isbn }}</small></td>
+                                <td><strong>{{ result.titre }}</strong></td>
+                                <td>{{ result.auteurs }}</td>
+                                <td>{{ result.edition or 'N/A' }}</td>
+                                <td>{{ result.annee_publication }}</td>
+                                <td>{{ result.prix }} {{ result.code_devise }}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Aucun résultat trouvé pour ces critères.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+# --- Environnement virtuel ---
+venv/
+ENV/
+env/
+
+# --- Fichiers Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Fichiers de configuration locaux ---
+*.env
+*.ini
+
+# --- SQLite database files ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Dossiers de logs ---
+logs/
+*.log
+
+# --- Dossiers de cache ---
+.cache/
+.pytest_cache/
+*.egg-info/
+
+# --- Fichiers générés ---
+*.bak
+*.tmp
+
+# --- VS Code settings ---
+.vscode/
+
+# --- Docker ---
+*~ 
+docker-compose.override.yml

@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Administration - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">⚙️ Administration</h1>
+        <p class="lead">Gestion et statistiques de la bibliothèque</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton ajouter publication -->
+<div class="mb-4">
+    <a href="{{ url_for('admin.ajouter_publication') }}" class="btn btn-success">
+        ➕ Ajouter une Publication
+    </a> 
+    <a href="{{ url_for('publications.vues') }}" class="btn btn-info">
+        📊 Voir toutes les Vues SQL
+    </a>
+    <a href="{{ url_for('admin.gerer_propositions') }}" class="btn btn-warning">
+        📋 Gérer les Propositions d'achat
+    </a>
+    <a href="{{ url_for('admin.historique_pertes') }}" class="btn btn-danger">
+        📊 Historique des Pertes
+    </a>
+    <a href="{{ url_for('admin.gerer_utilisateurs') }}" class="btn btn-primary">
+        👥 Gérer les Utilisateurs
+    </a>
+</div>
+
+<!-- Section Déclaration de Perte -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">⚠️ Déclarer une Publication Perdue</h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">
+            Sélectionnez une publication empruntée pour la déclarer comme perdue. 
+            Cela mettra à jour son statut et créera un enregistrement dans l'historique.
+        </p>
+        
+        {% if borrowed_pubs and borrowed_pubs|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Titre</th>
+                            <th>Éditeur</th>
+                            <th>Emprunté par</th>
+                            <th>Laboratoire</th>
+                            <th>Prix</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pub in borrowed_pubs %}
+                        <tr>
+                            <td>{{ pub.id_publication }}</td>
+                            <td><strong>{{ pub.titre }}</strong></td>
+                            <td>{{ pub.editeur or 'N/A' }}</td>
+                            <td>
+                                {% if pub.nom_emprunteur %}
+                                    {{ pub.nom_emprunteur }}<br>
+                                    <small class="text-muted">{{ pub.email_emprunteur }}</small>
+                                {% else %}
+                                    <span class="text-muted">Non spécifié</span>
+                                {% endif %}
+                            </td>
+                            <td><small>{{ pub.nom_labo }}</small></td>
+                            <td>{{ pub.prix }} {{ pub.code_devise }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.formulaire_declaration_perte', id_publication=pub.id_publication) }}" 
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Déclarer cette publication comme perdue ?')">
+                                    ⚠️ Déclarer perdue
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-success mb-0">
+                 Aucune publication actuellement empruntée. Rien à déclarer.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques par laboratoire (Requête 3) -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">💰 Prix Total par Laboratoire (Requête 3)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Laboratoire</th>
+                        <th>Nombre de Publications</th>
+                        <th>Prix Total (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lab in lab_stats %}
+                    <tr>
+                        <td>{{ lab.id_labo }}</td>
+                        <td><strong>{{ lab.nom_labo }}</strong></td>
+                        <td>{{ lab.nombre_publications }}</td>
+                        <td>
+                            <strong class="text-success">{{ lab.prix_total_euros or '0.00' }} €</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="2"><strong>TOTAL</strong></td>
+                        <td><strong>{{ lab_stats|sum(attribute='nombre_publications') }}</strong></td>
+                        <td>
+                            <strong class="text-success">
+                                {{ "%.2f"|format(lab_stats|sum(attribute='prix_total_euros')|float) }} €
+                            </strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Livres perdus (Requête 9) -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">⚠️ Livres Perdus (Requête 9)</h5>
+    </div>
+    <div class="card-body">
+        {% if lost_books %}
+            <div class="alert alert-warning">
+                <strong>Attention !</strong> {{ lost_books|length }} livre(s) perdu(s) détecté(s).
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Titre</th>
+                            <th>Auteurs</th>
+                            <th>Éditeur</th>
+                            <th>ISBN</th>
+                            <th>Propriétaire</th>
+                            <th>Prix Original</th>
+                            <th>Prix (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in lost_books %}
+                        <tr>
+                            <td><strong>{{ book.titre }}</strong></td>
+                            <td>{{ book.auteurs }}</td>
+                            <td>{{ book.editeur }}</td>
+                            <td><small>{{ book.isbn }}</small></td>
+                            <td>{{ book.proprietaire }}</td>
+                            <td>{{ book.prix }} {{ book.code_devise }}</td>
+                            <td><strong class="text-danger">{{ book.prix_euros }} €</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="6"><strong>Valeur totale des pertes</strong></td>
+                            <td>
+                                <strong class="text-danger">
+                                    {{ "%.2f"|format(lost_books|sum(attribute='prix_euros')|float) }} €
+                                </strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-success mb-0">
+                <i class="bi bi-check-circle"></i> Aucun livre perdu. Excellent !
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques détaillées par laboratoire (Vue) -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">📊 Statistiques Détaillées (Vue SQL)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Laboratoire</th>
+                        <th>Total</th>
+                        <th>Disponibles</th>
+                        <th>Empruntés</th>
+                        <th>Perdus</th>
+                        <th>Valeur (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in lab_statistics %}
+                    <tr>
+                        <td><strong>{{ stat.nom_labo }}</strong></td>
+                        <td>{{ stat.total_publications }}</td>
+                        <td><span class="badge bg-success">{{ stat.disponibles }}</span></td>
+                        <td><span class="badge bg-warning">{{ stat.empruntes }}</span></td>
+                        <td><span class="badge bg-danger">{{ stat.perdus }}</span></td>
+                        <td><strong>{{ "%.2f"|format(stat.valeur_totale_euros|float) }} €</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Publications disponibles (Vue) -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">✓ Publications Disponibles (Vue SQL)</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">
+            Nombre total de publications disponibles : <strong>{{ available_pubs|length }}</strong>
+        </p>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Titre</th>
+                        <th>Éditeur</th>
+                        <th>Année</th>
+                        <th>Type</th>
+                        <th>Prix</th>
+                        <th>Laboratoire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pub in available_pubs[:10] %}
+                    <tr>
+                        <td>{{ pub.titre }}</td>
+                        <td>{{ pub.editeur or 'N/A' }}</td>
+                        <td>{{ pub.annee_publication or 'N/A' }}</td>
+                        <td><span class="badge bg-secondary">{{ pub.type_publication }}</span></td>
+                        <td>{{ pub.prix }} {{ pub.code_devise }}</td>
+                        <td><small>{{ pub.laboratoire }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if available_pubs|length > 10 %}
+        <p class="text-muted text-center mb-0">
+            <small>... et {{ available_pubs|length - 10 }} autres publications disponibles</small>
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Emprunts - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">📖 Mes Emprunts</h1>
+        <p class="lead">Consulter les publications empruntées</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Sélection utilisateur -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Sélectionner un utilisateur (Requête 2)</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Utilisateur :</label>
+                    <select class="form-select" name="email" required>
+                        <option value="">-- Choisir un utilisateur --</option>
+                        {% for user in users %}
+                            <option value="{{ user.email }}" 
+                                    {% if selected_user == user.email %}selected{% endif %}>
+                                {{ user.nom_complet }} ({{ user.email }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Afficher les emprunts
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Résultats des emprunts -->
+{% if emprunts is not none %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            📚 Emprunts actifs : {{ emprunts|length }}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if emprunts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Titre</th>
+                            <th>Éditeur</th>
+                            <th>Année</th>
+                            <th>Identifiant</th>
+                            <th>Laboratoire</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emprunt in emprunts %}
+                        <tr>
+                            <td>{{ emprunt.id_publication }}</td>
+                            <td><strong>{{ emprunt.titre }}</strong></td>
+                            <td>{{ emprunt.editeur or 'N/A' }}</td>
+                            <td>{{ emprunt.annee_publication or 'N/A' }}</td>
+                            <td><small>{{ emprunt.identification or 'N/A' }}</small></td>
+                            <td><small>{{ emprunt.nom_labo }}</small></td>
+                            <td>
+                                <form method="POST" action="{{ url_for('publications.retourner') }}" style="display: inline;">
+                                    <input type="hidden" name="id_publication" value="{{ emprunt.id_publication }}">
+                                    <button type="submit" class="btn btn-sm btn-success" 
+                                            onclick="return confirm('Confirmer le retour de cette publication ?')">
+                                        ✓ Retourner
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> Cet utilisateur n'a aucun emprunt en cours.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Informations supplémentaires -->
+{% if emprunts %}
+<div class="alert alert-info mt-4">
+    <strong>ℹ️ Information :</strong> Pour retourner une publication, cliquez sur le bouton "Retourner".
+    La publication redeviendra disponible immédiatement.
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">🔐 Connexion à la Bibliothèque ECL</h3>
+            </div>
+            <div class="card-body p-5">
+                
+                <!-- Connexion Admin -->
+                <div class="mb-5">
+                    <h4 class="text-center mb-3">
+                        <span class="badge bg-danger">Administrateur</span>
+                    </h4>
+                    <form method="POST">
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="email" value="admin@ecl.fr" class="btn btn-danger btn-lg">
+                                🔑 Se connecter en tant qu'Admin
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Connexion Utilisateur -->
+                <div>
+                    <h4 class="text-center mb-3">
+                        <span class="badge bg-secondary">Utilisateurs</span>
+                    </h4>
+                    <p class="text-center text-muted mb-4">
+                        Sélectionnez votre compte utilisateur
+                    </p>
+                    
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="email" class="form-label">Votre compte :</label>
+                            <select class="form-select form-select-lg" id="email" name="email" required>
+                                <option value="">-- Sélectionnez votre compte --</option>
+                                {% for user in users %}
+                                    {% if user.role != 'admin' %}
+                                        <option value="{{ user.email }}">
+                                            {{ user.nom_complet }} ({{ user.email }})
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            👤 Se connecter
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

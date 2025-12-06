@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Déclarer une perte{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">⚠️ Déclarer une publication comme perdue</h2>
+
+    <div class="alert alert-danger">
+        <h5>⚠️ Attention</h5>
+        <p class="mb-0">
+            Cette action va marquer la publication comme "perdue" définitivement. 
+            Le statut sera changé et un enregistrement sera créé dans l'historique des pertes.
+        </p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">🗑️ Formulaire de déclaration</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <!-- Sélection de la publication -->
+                <div class="mb-4">
+                    <label for="id_publication" class="form-label">
+                        Publication à déclarer perdue <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select form-select-lg" id="id_publication" name="id_publication" 
+                            required onchange="updatePublicationDetails()">
+                        <option value="">-- Sélectionnez une publication --</option>
+                        {% for pub in publications %}
+                            <option value="{{ pub.id_publication }}" 
+                                    data-titre="{{ pub.titre }}"
+                                    data-editeur="{{ pub.editeur }}"
+                                    data-annee="{{ pub.annee_publication }}"
+                                    data-statut="{{ pub.statut }}"
+                                    data-prix="{{ pub.prix }}"
+                                    data-devise="{{ pub.code_devise }}"
+                                    data-labo="{{ pub.nom_labo }}"
+                                    data-emprunteur="{{ pub.nom_emprunteur or 'Personne' }}">
+                                [{{ pub.id_publication }}] {{ pub.titre }} - {{ pub.editeur }} ({{ pub.annee_publication }})
+                                {% if pub.statut == 'emprunté' %}
+                                    - ⚠️ Emprunté par {{ pub.nom_emprunteur }}
+                                {% elif pub.statut == 'sur étagère' %}
+                                    - ✅ Sur étagère
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Détails de la publication sélectionnée -->
+                <div id="publication-details" class="alert alert-light mb-4" style="display:none;">
+                    <h6>📖 Détails de la publication sélectionnée :</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Titre :</strong> <span id="detail-titre">-</span></p>
+                            <p class="mb-1"><strong>Éditeur :</strong> <span id="detail-editeur">-</span></p>
+                            <p class="mb-1"><strong>Année :</strong> <span id="detail-annee">-</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Statut actuel :</strong> <span id="detail-statut">-</span></p>
+                            <p class="mb-1"><strong>Prix :</strong> <span id="detail-prix">-</span></p>
+                            <p class="mb-1"><strong>Laboratoire :</strong> <span id="detail-labo">-</span></p>
+                        </div>
+                    </div>
+                    <div id="emprunteur-info" class="alert alert-warning mt-2" style="display:none;">
+                        <strong>⚠️ Emprunté par :</strong> <span id="detail-emprunteur">-</span>
+                    </div>
+                </div>
+
+                <!-- Date de découverte -->
+                <div class="mb-3">
+                    <label for="date_decouverte" class="form-label">
+                        Date de découverte de la perte <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" class="form-control" id="date_decouverte" name="date_decouverte" 
+                           required max="{{ now }}" value="{{ now }}">
+                    <small class="text-muted">À quelle date avez-vous constaté la perte ?</small>
+                </div>
+
+                <!-- Motif -->
+                <div class="mb-3">
+                    <label for="motif" class="form-label">
+                        Motif de la perte <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" name="motif" rows="4" required 
+                              placeholder="Expliquez les circonstances de la perte...
+
+Exemples :
+- Publication non retournée après plusieurs relances
+- Publication introuvable malgré vérifications
+- Dégradation irréparable
+- Déclarée perdue par l'emprunteur"></textarea>
+                </div>
+
+                <!-- Coût de remplacement -->
+                <div class="mb-4">
+                    <label for="cout_remplacement" class="form-label">
+                        Coût de remplacement estimé
+                    </label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" class="form-control" name="cout_remplacement" 
+                               id="cout_input" placeholder="0.00">
+                        <span class="input-group-text" id="devise_display">€</span>
+                    </div>
+                    <small class="text-muted">Laissez vide pour utiliser le prix d'achat initial</small>
+                </div>
+
+                <!-- Résumé -->
+                <div class="alert alert-warning">
+                    <h6>📋 Cette action va :</h6>
+                    <ul class="mb-0">
+                        <li>Marquer la publication comme <strong>"perdue"</strong></li>
+                        <li>Annuler l'emprunt en cours (si applicable)</li>
+                        <li>Créer une entrée dans l'historique des pertes</li>
+                        <li>Enregistrer l'administrateur ayant fait la déclaration : <strong>{{ session.user_name }}</strong></li>
+                    </ul>
+                </div>
+
+                <!-- Boutons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger btn-lg" 
+                            onclick="return confirm('⚠️ Confirmer la déclaration de perte de cette publication ?')">
+                        ⚠️ Déclarer comme perdue
+                    </button>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary btn-lg">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePublicationDetails() {
+    const select = document.getElementById('id_publication');
+    const option = select.options[select.selectedIndex];
+    
+    if (option.value) {
+        // Afficher les détails
+        document.getElementById('publication-details').style.display = 'block';
+        
+        // Remplir les détails
+        document.getElementById('detail-titre').textContent = option.dataset.titre;
+        document.getElementById('detail-editeur').textContent = option.dataset.editeur || 'N/A';
+        document.getElementById('detail-annee').textContent = option.dataset.annee;
+        document.getElementById('detail-statut').innerHTML = '<span class="badge bg-' + 
+            (option.dataset.statut === 'emprunté' ? 'warning' : 'success') + '">' + 
+            option.dataset.statut + '</span>';
+        document.getElementById('detail-prix').textContent = option.dataset.prix + ' ' + option.dataset.devise;
+        document.getElementById('detail-labo').textContent = option.dataset.labo;
+        
+        // Pré-remplir le coût
+        document.getElementById('cout_input').value = option.dataset.prix;
+        document.getElementById('devise_display').textContent = option.dataset.devise;
+        
+        // Afficher l'emprunteur si emprunté
+        if (option.dataset.emprunteur !== 'Personne') {
+            document.getElementById('emprunteur-info').style.display = 'block';
+            document.getElementById('detail-emprunteur').textContent = option.dataset.emprunteur;
+        } else {
+            document.getElementById('emprunteur-info').style.display = 'none';
+        }
+    } else {
+        document.getElementById('publication-details').style.display = 'none';
+    }
+}
+
+// Définir la date max à aujourd'hui
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date_decouverte').setAttribute('max', today);
+    document.getElementById('date_decouverte').value = today;
+});
+</script>
+{% endblock %}

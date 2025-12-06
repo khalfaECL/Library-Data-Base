@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Proposer un achat - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📋 Proposer l'achat d'une publication</h2>
+    
+    <div class="alert alert-info">
+        <h5>💡 Comment ça marche ?</h5>
+        <p class="mb-0">
+            Vous pouvez proposer l'achat de nouveaux livres, périodiques ou rapports pour enrichir la bibliothèque. 
+            Remplissez le formulaire ci-dessous avec toutes les informations disponibles. 
+            Votre proposition sera examinée par l'administration.
+        </p>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-4">
+            <form method="POST" id="proposalForm">
+                <!-- Proposeur -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="email_proposeur" class="form-label">Votre nom <span class="text-danger">*</span></label>
+                        <select class="form-select" name="email_proposeur" required>
+                            <option value="">-- Sélectionnez votre nom --</option>
+                            {% for user in users %}
+                                <option value="{{ user.email }}">{{ user.nom_complet }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="type_publication" class="form-label">Type de publication <span class="text-danger">*</span></label>
+                        <select class="form-select" id="type_publication" name="type_publication" required onchange="toggleFields()">
+                            <option value="">-- Sélectionnez --</option>
+                            <option value="livre">📘 Livre</option>
+                            <option value="périodique">📰 Périodique</option>
+                            <option value="rapport interne">📄 Rapport interne</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Informations générales -->
+                <h5 class="mt-4 mb-3">Informations générales</h5>
+                
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="titre" class="form-label">Titre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="titre" required 
+                               placeholder="Ex: Introduction to Machine Learning">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="annee_publication" class="form-label">Année <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="annee_publication" 
+                               min="1900" max="2100" required placeholder="2024">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="editeur" class="form-label">Éditeur</label>
+                        <input type="text" class="form-control" name="editeur" 
+                               placeholder="Ex: MIT Press">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="edition" class="form-label">Édition</label>
+                        <input type="text" class="form-control" name="edition" 
+                               placeholder="Ex: 2ème édition">
+                    </div>
+                </div>
+
+                <!-- Champs spécifiques selon le type -->
+                <div id="livre_fields" style="display:none;">
+                    <h5 class="mt-4 mb-3">Informations spécifiques - Livre</h5>
+                    <div class="mb-3">
+                        <label for="isbn" class="form-label">ISBN</label>
+                        <input type="text" class="form-control" name="isbn" 
+                               placeholder="Ex: 978-0-262-03384-8">
+                    </div>
+                </div>
+
+                <div id="periodique_fields" style="display:none;">
+                    <h5 class="mt-4 mb-3">Informations spécifiques - Périodique</h5>
+                    <div class="mb-3">
+                        <label for="numero_volume" class="form-label">Numéro de volume</label>
+                        <input type="number" class="form-control" name="numero_volume" 
+                               placeholder="Ex: 42">
+                    </div>
+                </div>
+
+                <div id="rapport_fields" style="display:none;">
+                    <h5 class="mt-4 mb-3">Informations spécifiques - Rapport interne</h5>
+                    <div class="mb-3">
+                        <label for="numero_identification" class="form-label">Numéro d'identification</label>
+                        <input type="text" class="form-control" name="numero_identification" 
+                               placeholder="Ex: REPORT-2024-001">
+                    </div>
+                </div>
+
+                <!-- Informations d'achat -->
+                <h5 class="mt-4 mb-3">Informations d'achat</h5>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nom_librairie" class="form-label">Librairie / Site web</label>
+                        <input type="text" class="form-control" name="nom_librairie" 
+                               placeholder="Ex: Amazon, Fnac, Decitre">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="prix_estime" class="form-label">Prix estimé</label>
+                        <input type="number" step="0.01" class="form-control" name="prix_estime" 
+                               placeholder="49.99">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="code_devise" class="form-label">Devise</label>
+                        <select class="form-select" name="code_devise">
+                            <option value="€">€ - Euro</option>
+                            <option value="$">$ - Dollar</option>
+                            <option value="£">£ - Livre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="url_achat" class="form-label">URL d'achat (lien vers le produit)</label>
+                    <input type="url" class="form-control" name="url_achat" 
+                           placeholder="https://www.amazon.fr/...">
+                </div>
+
+                <!-- Justification -->
+                <div class="mb-4">
+                    <label for="justification" class="form-label">Justification / Intérêt pour la bibliothèque</label>
+                    <textarea class="form-control" name="justification" rows="4" 
+                              placeholder="Expliquez pourquoi cette publication serait utile pour la bibliothèque ECL..."></textarea>
+                </div>
+
+                <!-- Boutons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        📤 Envoyer la proposition
+                    </button>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary btn-lg">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const type = document.getElementById('type_publication').value;
+    
+    document.getElementById('livre_fields').style.display = 'none';
+    document.getElementById('periodique_fields').style.display = 'none';
+    document.getElementById('rapport_fields').style.display = 'none';
+    
+    if (type === 'livre') {
+        document.getElementById('livre_fields').style.display = 'block';
+    } else if (type === 'périodique') {
+        document.getElementById('periodique_fields').style.display = 'block';
+    } else if (type === 'rapport interne') {
+        document.getElementById('rapport_fields').style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

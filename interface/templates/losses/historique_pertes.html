@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des pertes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">📊 Historique des publications perdues</h2>
+
+    {% if pertes|length > 0 %}
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ pertes|length }}</h3>
+                        <p class="mb-0">Total pertes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h3>{{ pertes|sum(attribute='cout_remplacement')|default(0)|round(2) }} €</h3>
+                        <p class="mb-0">Coût total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ (pertes|sum(attribute='cout_remplacement') / pertes|length)|default(0)|round(2) }} €</h3>
+                        <p class="mb-0">Coût moyen</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des pertes -->
+        <div class="card shadow">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Publication</th>
+                                <th>Labo</th>
+                                <th>Responsable</th>
+                                <th>Admin</th>
+                                <th>Coût</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perte in pertes %}
+                            <tr>
+                                <td>{{ perte.id_declaration }}</td>
+                                <td>{{ perte.date_declaration }}</td>
+                                <td>
+                                    <strong>{{ perte.titre }}</strong><br>
+                                    <small class="text-muted">{{ perte.editeur }}</small>
+                                </td>
+                                <td>{{ perte.nom_labo }}</td>
+                                <td>
+                                    {% if perte.nom_responsable %}
+                                        {{ perte.nom_responsable }}
+                                    {% else %}
+                                        <span class="text-muted">Non emprunté</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ perte.nom_admin }}</small></td>
+                                <td>
+                                    <strong>{{ perte.cout_remplacement|default('-') }}</strong>
+                                    {% if perte.cout_remplacement %}
+                                        {{ perte.code_devise }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if perte.statut_resolution == 'perdu' %}
+                                        <span class="badge bg-danger">⚠️ Perdu</span>
+                                    {% elif perte.statut_resolution == 'retrouvé' %}
+                                        <span class="badge bg-success">✅ Retrouvé</span>
+                                        {% if perte.date_resolution %}
+                                            <br><small class="text-muted">le {{ perte.date_resolution }}</small>
+                                        {% endif %}
+                                    {% elif perte.statut_resolution == 'remplacé' %}
+                                        <span class="badge bg-info">🔄 Remplacé</span>
+                                        {% if perte.date_resolution %}
+                                            <br><small class="text-muted">le {{ perte.date_resolution }}</small>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#motif{{ perte.id_declaration }}">
+                                            💬 Motif
+                                        </button>
+                                        
+                                        {% if perte.statut_resolution == 'perdu' %}
+                                            <form method="POST" action="{{ url_for('admin.marquer_retrouvee') }}" class="d-inline">
+                                                <input type="hidden" name="id_publication" value="{{ perte.id_publication }}">
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-success" 
+                                                        onclick="return confirm('Marquer comme retrouvée ?')">
+                                                    ✅ Retrouvée
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="collapse" id="motif{{ perte.id_declaration }}">
+                                <td colspan="9" class="bg-light">
+                                    <strong>💬 Motif de la perte :</strong><br>
+                                    {{ perte.motif or 'Non spécifié' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-success">
+            <h5>✅ Aucune perte déclarée</h5>
+            <p class="mb-0">Aucune publication n'a été déclarée comme perdue.</p>
+        </div>
+    {% endif %}
+
+    <div class="mt-3">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">← Retour Admin</a>
+    </div>
+</div>
+{% endblock %}

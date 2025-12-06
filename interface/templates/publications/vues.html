@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Vues SQL - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">📊 Vues SQL</h1>
+        <p class="lead">Consultation des 5 vues créées dans la base de données</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation entre les vues -->
+<ul class="nav nav-pills mb-4" id="vuesTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="disponibles-tab" data-bs-toggle="tab" 
+                data-bs-target="#disponibles" type="button">
+            Vue 1 : Disponibles
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="livres-tab" data-bs-toggle="tab" 
+                data-bs-target="#livres" type="button">
+            Vue 2 : Livres Complets
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="prix-tab" data-bs-toggle="tab" 
+                data-bs-target="#prix" type="button">
+            Vue 3 : Prix en Euros
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" 
+                data-bs-target="#stats" type="button">
+            Vue 4 : Stats Labos
+        </button>
+    </li>
+</ul>
+
+<!-- Contenu des vues -->
+<div class="tab-content" id="vuesTabsContent">
+    
+    <!-- Vue 1 : Publications Disponibles -->
+    <div class="tab-pane fade show active" id="disponibles" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Vue 1 : Publications Disponibles (vue_publications_disponibles)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Publications avec statut "sur étagère" - Total : <strong>{{ disponibles|length }}</strong>
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Titre</th>
+                                <th>Éditeur</th>
+                                <th>Année</th>
+                                <th>Type</th>
+                                <th>Prix</th>
+                                <th>Laboratoire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pub in disponibles %}
+                            <tr>
+                                <td>{{ pub.id_publication }}</td>
+                                <td><strong>{{ pub.titre }}</strong></td>
+                                <td>{{ pub.editeur or 'N/A' }}</td>
+                                <td>{{ pub.annee_publication or 'N/A' }}</td>
+                                <td><span class="badge bg-secondary">{{ pub.type_publication }}</span></td>
+                                <td>{{ pub.prix }} {{ pub.code_devise }}</td>
+                                <td><small>{{ pub.laboratoire }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue 2 : Livres Complets -->
+    <div class="tab-pane fade" id="livres" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Vue 2 : Livres Complets avec Auteurs (vue_livres_complets)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Tous les livres avec leurs auteurs agrégés - Total : <strong>{{ livres_complets|length }}</strong>
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Titre</th>
+                                <th>Auteurs</th>
+                                <th>ISBN</th>
+                                <th>Année</th>
+                                <th>Statut</th>
+                                <th>Laboratoire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for livre in livres_complets %}
+                            <tr>
+                                <td><strong>{{ livre.titre }}</strong></td>
+                                <td>{{ livre.auteurs or 'N/A' }}</td>
+                                <td><small>{{ livre.isbn }}</small></td>
+                                <td>{{ livre.annee_publication or 'N/A' }}</td>
+                                <td>
+                                    {% if livre.statut == 'sur étagère' %}
+                                        <span class="badge bg-success">Disponible</span>
+                                    {% elif livre.statut == 'emprunté' %}
+                                        <span class="badge bg-warning">Emprunté</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ livre.statut }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ livre.laboratoire }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue 3 : Prix en Euros -->
+    <div class="tab-pane fade" id="prix" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Vue 3 : Prix Convertis en Euros (vue_prix_euros)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Toutes les publications avec conversion automatique des prix en euros
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Titre</th>
+                                <th>Type</th>
+                                <th>Prix Original</th>
+                                <th>Prix (€)</th>
+                                <th>Laboratoire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pub in prix_euros %}
+                            <tr>
+                                <td><strong>{{ pub.titre }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ pub.type_publication }}</span></td>
+                                <td>{{ pub.prix_original }} {{ pub.code_devise }}</td>
+                                <td><strong class="text-success">{{ pub.prix_euros }} €</strong></td>
+                                <td><small>{{ pub.laboratoire }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3"><strong>Prix Total</strong></td>
+                                <td colspan="2">
+                                    <strong class="text-success">
+                                        {{ "%.2f"|format(prix_euros|sum(attribute='prix_euros')|float) }} €
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue 4 : Statistiques Laboratoires -->
+    <div class="tab-pane fade" id="stats" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Vue 4 : Statistiques par Laboratoire (vue_stats_labos)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Vue d'ensemble de l'état des publications par laboratoire
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Laboratoire</th>
+                                <th>Total Publications</th>
+                                <th>Disponibles</th>
+                                <th>Empruntés</th>
+                                <th>Perdus</th>
+                                <th>Valeur Totale (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in stats_labos %}
+                            <tr>
+                                <td><strong>{{ stat.nom_labo }}</strong></td>
+                                <td>{{ stat.total_publications }}</td>
+                                <td><span class="badge bg-success">{{ stat.disponibles }}</span></td>
+                                <td><span class="badge bg-warning">{{ stat.empruntes }}</span></td>
+                                <td><span class="badge bg-danger">{{ stat.perdus }}</span></td>
+                                <td><strong>{{ "%.2f"|format(stat.valeur_totale_euros|float) }} €</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td><strong>TOTAL</strong></td>
+                                <td><strong>{{ stats_labos|sum(attribute='total_publications') }}</strong></td>
+                                <td><strong>{{ stats_labos|sum(attribute='disponibles') }}</strong></td>
+                                <td><strong>{{ stats_labos|sum(attribute='empruntes') }}</strong></td>
+                                <td><strong>{{ stats_labos|sum(attribute='perdus') }}</strong></td>
+                                <td>
+                                    <strong class="text-success">
+                                        {{ "%.2f"|format(stats_labos|sum(attribute='valeur_totale_euros')|float) }} €
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Graphique simple -->
+                <div class="mt-4">
+                    <h6>Répartition des publications par statut :</h6>
+                    <div class="progress" style="height: 30px;">
+                        {% set total = stats_labos|sum(attribute='total_publications') %}
+                        {% set disponibles = stats_labos|sum(attribute='disponibles') %}
+                        {% set empruntes = stats_labos|sum(attribute='empruntes') %}
+                        {% set perdus = stats_labos|sum(attribute='perdus') %}
+                        
+                        <div class="progress-bar bg-success" style="width: {{ (disponibles/total*100)|round }}%">
+                            {{ disponibles }} Disponibles
+                        </div>
+                        <div class="progress-bar bg-warning" style="width: {{ (empruntes/total*100)|round }}%">
+                            {{ empruntes }} Empruntés
+                        </div>
+                        <div class="progress-bar bg-danger" style="width: {{ (perdus/total*100)|round }}%">
+                            {{ perdus }} Perdus
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

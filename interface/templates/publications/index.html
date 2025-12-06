@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">📚 Catalogue des Publications</h1>
+        <p class="lead">Liste complète des publications de la bibliothèque</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+    </div>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h3>{{ publications|length }}</h3>
+                <p class="mb-0">Publications totales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h3>{{ publications|selectattr('statut', 'equalto', 'sur étagère')|list|length }}</h3>
+                <p class="mb-0">Disponibles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center bg-warning text-white">
+            <div class="card-body">
+                <h3>{{ publications|selectattr('statut', 'equalto', 'emprunté')|list|length }}</h3>
+                <p class="mb-0">Empruntées</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des publications -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Toutes les Publications (Requête 1)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Titre</th>
+                        <th>Auteurs</th>
+                        <th>Éditeur</th>
+                        <th>Année</th>
+                        <th>Type</th>
+                        <th>Identifiant</th>
+                        <th>Prix</th>
+                        <th>Labo</th>
+                        <th>Disponibilité</th>
+                        <th>Statut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pub in publications %}
+                    <tr>
+                        <td>{{ pub.id_publication }}</td>
+                        <td><strong>{{ pub.titre }}</strong></td>
+                        <td>{{ pub.auteurs or 'N/A' }}</td>
+                        <td>{{ pub.editeur or 'N/A' }}</td>
+                        <td>{{ pub.annee_publication or 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ pub.type_publication }}</span>
+                        </td>
+                        <td><small>{{ pub.identification or 'N/A' }}</small></td>
+                        <td>{{ pub.prix }} {{ pub.code_devise }}</td>
+                        <td><small>{{ pub.nom_labo }}</small></td>
+                        <td>
+                            {% if pub.exemplaires_disponibles is defined %}
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if pub.exemplaires_disponibles > 0 %}
+                                        <span class="badge bg-success">{{ pub.exemplaires_disponibles }}/{{ pub.total_exemplaires }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">0/{{ pub.total_exemplaires }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if pub.statut == 'emprunté' and pub.tous_emprunteurs %}
+                                    <div class="mt-1">
+                                        <small class="text-muted">Emprunté par:</small>
+                                        {% for emprunteur in pub.tous_emprunteurs %}
+                                            <br><small class="text-warning">• {{ emprunteur.nom_emprunteur }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.statut == 'sur étagère' %}
+                                <span class="badge bg-success">✓ Disponible</span>
+                            {% elif pub.statut == 'emprunté' %}
+                                <span class="badge bg-warning">⏳ Emprunté</span>
+                            {% elif pub.statut == 'perdu' %}
+                                <span class="badge bg-danger">✗ Perdu</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ pub.statut }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.statut == 'sur étagère' %}
+                                <button type="button" class="btn btn-sm btn-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#borrowModal"
+                                        data-id="{{ pub.id_publication }}"
+                                        data-titre="{{ pub.titre }}">
+                                    Emprunter
+                                </button>
+                            {% else %}
+                                <button class="btn btn-sm btn-secondary" disabled>
+                                    Indisponible
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour emprunter -->
+<div class="modal fade" id="borrowModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Emprunter une publication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('publications.emprunter') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="id_publication" id="borrow-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Publication :</strong></label>
+                        <p id="borrow-titre" class="text-muted"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="borrow-user" class="form-label">Sélectionner l'utilisateur :</label>
+                        <select class="form-select" name="email" id="borrow-user" required>
+                            <option value="">-- Choisir un utilisateur --</option>
+                            {% for user in users %}
+                                <option value="{{ user.email }}">{{ user.nom_complet }} ({{ user.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Confirmer l'emprunt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script pour passer les données au modal
+document.addEventListener('DOMContentLoaded', function() {
+    const borrowModal = document.getElementById('borrowModal');
+    borrowModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const titre = button.getAttribute('data-titre');
+        
+        document.getElementById('borrow-id').value = id;
+        document.getElementById('borrow-titre').textContent = titre;
+    });
+});
+</script>
+{% endblock %}

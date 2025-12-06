@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une Publication - Bibliothèque ECL{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4">➕ Ajouter une Publication</h1>
+        <p class="lead">Formulaire d'ajout d'une nouvelle publication dans la bibliothèque</p>
+        <div>
+            <span class="badge bg-primary me-2">
+                Connecté : {{ session.user_name }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                🔄 Changer d'utilisateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Formulaire d'Ajout</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.ajouter_publication') }}">
+                    
+                    <!-- Informations de base -->
+                    <div class="mb-3">
+                        <label for="titre" class="form-label">Titre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titre" name="titre" 
+                               placeholder="Ex: Introduction aux algorithmes" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editeur" class="form-label">Éditeur <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editeur" name="editeur" 
+                                   placeholder="Ex: MIT Press" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edition" class="form-label">Édition</label>
+                            <input type="text" class="form-control" id="edition" name="edition" 
+                                   placeholder="Ex: 3ème édition">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="annee" class="form-label">Année <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="annee" name="annee" 
+                                   min="1000" max="2100" value="2024" required>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label for="librairie" class="form-label">Librairie</label>
+                            <input type="text" class="form-control" id="librairie" name="librairie" 
+                                   placeholder="Ex: Gibert Joseph">
+                        </div>
+                    </div>
+
+                    <!-- Prix et devise -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="prix" class="form-label">Prix <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="prix" name="prix" 
+                                   step="0.01" min="0" placeholder="Ex: 49.99" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="devise" class="form-label">Devise <span class="text-danger">*</span></label>
+                            <select class="form-select" id="devise" name="devise" required>
+                                <option value="€">Euro (€)</option>
+                                <option value="$">Dollar US ($)</option>
+                                <option value="£">Livre Sterling (£)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Type et statut -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="livre">Livre</option>
+                                <option value="périodique">Périodique</option>
+                                <option value="rapport interne">Rapport Interne</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="statut" class="form-label">Statut <span class="text-danger">*</span></label>
+                            <select class="form-select" id="statut" name="statut" required>
+                                <option value="sur étagère">Sur étagère (Disponible)</option>
+                                <option value="emprunté">Emprunté</option>
+                                <option value="perdu">Perdu</option>
+                                <option value="à acheter">À acheter</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Laboratoire -->
+                    <div class="mb-3">
+                        <label for="id_labo" class="form-label">
+                            Laboratoire Propriétaire <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="id_labo" name="id_labo" required>
+                            <option value="">-- Choisir le propriétaire --</option>
+                            <option value="1">Laboratoire de Mécanique</option>
+                            <option value="2">Laboratoire d'Informatique</option>
+                            <option value="3">Laboratoire de Chimie</option>
+                            <option value="4">Laboratoire de Mathématiques</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            ⚠️ Chaque exemplaire physique appartient à un laboratoire. 
+                            Si plusieurs labos veulent le même livre, créez une entrée par labo.
+                        </small>
+                    </div>
+
+                    <!-- Informations supplémentaires selon le type -->
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Note :</strong> Après l'ajout de la publication, vous pourrez ajouter :
+                        <ul class="mb-0">
+                            <li>Les auteurs (table ECRIT)</li>
+                            <li>Les catégories pour les livres (table APPARTIENT_A)</li>
+                            <li>Les mots-clés (table DECRIT_PAR)</li>
+                            <li>ISBN pour les livres / Numéro de volume pour les périodiques</li>
+                        </ul>
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                            ← Retour Admin
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            ✓ Ajouter la Publication
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Aide -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">💡 Aide</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Champs obligatoires (*) :</strong></p>
+                <ul>
+                    <li><strong>Titre</strong> : Nom complet de la publication</li>
+                    <li><strong>Éditeur</strong> : Maison d'édition</li>
+                    <li><strong>Année</strong> : Année de publication (1000-2100)</li>
+                    <li><strong>Prix</strong> : Montant positif avec décimales</li>
+                    <li><strong>Devise</strong> : EUR, USD ou GBP</li>
+                    <li><strong>Type</strong> : Livre, Périodique ou Rapport interne</li>
+                    <li><strong>Statut</strong> : État actuel de la publication</li>
+                    <li><strong>Laboratoire</strong> : Propriétaire de la publication</li>
+                </ul>
+                
+                <p class="mb-0"><strong>⚠️ Attention :</strong> Ce formulaire ajoute uniquement l'entrée dans la table PUBLICATION. 
+                Pour une gestion complète (auteurs, ISBN, catégories), utilisez des requêtes SQL.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

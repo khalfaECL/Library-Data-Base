@@ -22,8 +22,18 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     """Page de connexion"""
     if request.method == 'POST':
-        email = request.form.get('email')
-        user_data = user.get_user_by_email(email)
+        email = (request.form.get('email') or '').strip().lower()
+
+        # Assurer la connexion admin même si l'entrée n'existe pas en base
+        if email == 'admin@ecl.fr':
+            user_data = user.get_user_by_email(email) or {
+                'email': 'admin@ecl.fr',
+                'prenom': 'Admin',
+                'nom': '',
+                'role': 'admin'
+            }
+        else:
+            user_data = user.get_user_by_email(email)
         
         if user_data:
             session['user_email'] = user_data['email']

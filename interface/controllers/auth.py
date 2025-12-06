@@ -24,31 +24,30 @@ def login():
     if request.method == 'POST':
         email = (request.form.get('email') or '').strip().lower()
 
-        # Assurer la connexion admin même si l'entrée n'existe pas en base
         if email == 'admin@ecl.fr':
-            user_data = user.get_user_by_email(email) or {
-                'email': 'admin@ecl.fr',
-                'prenom': 'Admin',
-                'nom': '',
-                'role': 'admin'
-            }
-        else:
-            user_data = user.get_user_by_email(email)
-        
-        if user_data:
-            session['user_email'] = user_data['email']
-            session['user_name'] = f"{user_data['prenom']} {user_data['nom']}"
-            session['user_role'] = user_data.get('role', 'utilisateur')
-            flash(f" Bienvenue {session['user_name']} !", 'success')
+            session['user_email'] = 'admin@ecl.fr'
+            session['user_name'] = 'Admin'
+            session['user_role'] = 'admin'
+            flash(" Bienvenue Admin !", 'success')
+            return redirect(url_for('admin.index'))
 
-            # Rediriger automatiquement les administrateurs vers le panneau admin
-            if session['user_role'] == 'admin':
-                return redirect(url_for('admin.index'))
+        user_data = user.get_user_by_email(email)
 
-            return redirect(url_for('publications.index'))
-        else:
+        if not user_data:
             flash(' Utilisateur non trouvé', 'error')
-    
+            return render_template('login.html', users=user.get_all_users() or [])
+
+        session['user_email'] = user_data['email']
+        session['user_name'] = f"{user_data['prenom']} {user_data['nom']}"
+        session['user_role'] = user_data.get('role', 'utilisateur')
+        flash(f" Bienvenue {session['user_name']} !", 'success')
+
+        # Rediriger automatiquement les administrateurs vers le panneau admin
+        if session['user_role'] == 'admin':
+            return redirect(url_for('admin.index'))
+
+        return redirect(url_for('publications.index'))
+
     users = user.get_all_users() or []
     return render_template('login.html', users=users)
 

@@ -30,6 +30,11 @@ def login():
             session['user_name'] = f"{user_data['prenom']} {user_data['nom']}"
             session['user_role'] = user_data.get('role', 'utilisateur')
             flash(f" Bienvenue {session['user_name']} !", 'success')
+
+            # Rediriger automatiquement les administrateurs vers le panneau admin
+            if session['user_role'] == 'admin':
+                return redirect(url_for('admin.index'))
+
             return redirect(url_for('publications.index'))
         else:
             flash(' Utilisateur non trouvé', 'error')

@@ -44,7 +44,12 @@ def login():
 
         return redirect(url_for('publications.index'))
 
-    users = user.get_all_users() or []
+    users = user.get_all_users()
+
+    if users is None:
+        flash(' Base de données indisponible : seule la connexion administrateur est disponible.', 'error')
+        users = []
+
     return render_template('login.html', users=users)
 
 

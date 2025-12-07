@@ -22,20 +22,45 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     """Page de connexion"""
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = (request.form.get('email') or '').strip().lower()
+
+        if email == 'admin@ecl.fr':
+            return login_admin()
+
         user_data = user.get_user_by_email(email)
-        
-        if user_data:
-            session['user_email'] = user_data['email']
-            session['user_name'] = f"{user_data['prenom']} {user_data['nom']}"
-            session['user_role'] = user_data.get('role', 'utilisateur')
-            flash(f" Bienvenue {session['user_name']} !", 'success')
-            return redirect(url_for('publications.index'))
-        else:
+
+        if not user_data:
             flash(' Utilisateur non trouvé', 'error')
-    
-    users = user.get_all_users() or []
+            return render_template('login.html', users=user.get_all_users() or [])
+
+        session['user_email'] = user_data['email']
+        session['user_name'] = f"{user_data['prenom']} {user_data['nom']}"
+        session['user_role'] = user_data.get('role', 'utilisateur')
+        flash(f" Bienvenue {session['user_name']} !", 'success')
+
+        # Rediriger automatiquement les administrateurs vers le panneau admin
+        if session['user_role'] == 'admin':
+            return redirect(url_for('admin.index'))
+
+        return redirect(url_for('publications.index'))
+
+    users = user.get_all_users()
+
+    if users is None:
+        flash(' Base de données indisponible : seule la connexion administrateur est disponible.', 'error')
+        users = []
+
     return render_template('login.html', users=users)
+
+
+@auth_bp.route('/login/admin', methods=['POST'])
+def login_admin():
+    """Connexion dédiée pour l'administrateur"""
+    session['user_email'] = 'admin@ecl.fr'
+    session['user_name'] = 'Admin'
+    session['user_role'] = 'admin'
+    flash(" Bienvenue Admin !", 'success')
+    return redirect(url_for('admin.index'))
 
 @auth_bp.route('/logout')
 def logout():

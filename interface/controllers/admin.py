@@ -10,6 +10,7 @@ from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import publication, user, loss, proposal
+from models.database import get_connection
 from .auth import require_admin
 
 # Créer le blueprint
@@ -23,6 +24,18 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @require_admin
 def index():
     """Interface d'administration"""
+    conn = get_connection()
+    if not conn:
+        flash(' Base de données indisponible. Affichage limité des données.', 'error')
+        return render_template('admin/admin.html',
+                             lab_stats=[],
+                             lost_books=[],
+                             available_pubs=[],
+                             lab_statistics=[],
+                             borrowed_pubs=[])
+
+    conn.close()
+
     lab_stats = publication.get_lab_stats() or []
     lost_books = publication.get_lost_books() or []
     available_pubs = publication.get_available_publications() or []

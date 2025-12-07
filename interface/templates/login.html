@@ -16,7 +16,7 @@
                     <h4 class="text-center mb-3">
                         <span class="badge bg-danger">Administrateur</span>
                     </h4>
-                    <form method="POST">
+                    <form method="POST" action="{{ url_for('auth.login_admin') }}">
                         <div class="d-grid gap-2">
                             <button type="submit" name="email" value="admin@ecl.fr" class="btn btn-danger btn-lg">
                                 🔑 Se connecter en tant qu'Admin

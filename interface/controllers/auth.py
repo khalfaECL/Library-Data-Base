@@ -25,11 +25,7 @@ def login():
         email = (request.form.get('email') or '').strip().lower()
 
         if email == 'admin@ecl.fr':
-            session['user_email'] = 'admin@ecl.fr'
-            session['user_name'] = 'Admin'
-            session['user_role'] = 'admin'
-            flash(" Bienvenue Admin !", 'success')
-            return redirect(url_for('admin.index'))
+            return login_admin()
 
         user_data = user.get_user_by_email(email)
 
@@ -50,6 +46,16 @@ def login():
 
     users = user.get_all_users() or []
     return render_template('login.html', users=users)
+
+
+@auth_bp.route('/login/admin', methods=['POST'])
+def login_admin():
+    """Connexion dédiée pour l'administrateur"""
+    session['user_email'] = 'admin@ecl.fr'
+    session['user_name'] = 'Admin'
+    session['user_role'] = 'admin'
+    flash(" Bienvenue Admin !", 'success')
+    return redirect(url_for('admin.index'))
 
 @auth_bp.route('/logout')
 def logout():
